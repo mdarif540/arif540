@@ -1,0 +1,203 @@
+*&---------------------------------------------------------------------*
+*& Report  ZAF_BLOCKED_ALV_2
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  ZAF_BLOCKED_ALV_2.
+
+data : it_t001 type standard table of t001,
+       it_ekko type standard table of ekko,
+       it_fcat_t001 type slis_t_fieldcat_alv,
+       it_fcat_ekko type slis_t_fieldcat_alv,
+       wa_layout type slis_layout_alv,
+       it_events type slis_t_event.
+
+data : lv_bukrs type bukrs.
+select-options : s_bukrs for lv_bukrs.
+
+start-of-selection.
+
+wa_layout-colwidth_optimize = 'X'.
+wa_layout-zebra = 'X'.
+perform get_data.
+
+perform block_alv_initialization.
+
+perform build_fcat_t001.
+perform block_list_append_t001.
+
+perform build_fcat_ekko.
+perform block_list_append_ekko.
+
+perform block_list_display.
+
+*&---------------------------------------------------------------------*
+*&      Form  GET_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+form GET_DATA .
+select *
+  from t001
+  into table it_t001
+  where bukrs in s_bukrs.
+
+  IF it_t001 is not initial.
+      select *
+        from ekko
+        into table it_ekko
+        for all entries in it_t001
+        where bukrs = it_t001-bukrs.
+  ENDIF.
+endform.                    " GET_DATA
+*&---------------------------------------------------------------------*
+*&      Form  BLOCK_ALV_INITIALIZATION
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+form BLOCK_ALV_INITIALIZATION .
+CALL FUNCTION 'REUSE_ALV_BLOCK_LIST_INIT'
+  EXPORTING
+    i_callback_program             = sy-cprog
+*   I_CALLBACK_PF_STATUS_SET       = ' '
+*   I_CALLBACK_USER_COMMAND        = ' '
+*   IT_EXCLUDING                   = IT_EXCLUDING
+          .
+
+endform.                    " BLOCK_ALV_INITIALIZATION
+*&---------------------------------------------------------------------*
+*&      Form  BUILD_FCAT_T001
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+form BUILD_FCAT_T001 .
+CALL FUNCTION 'REUSE_ALV_FIELDCATALOG_MERGE'
+ EXPORTING
+   I_PROGRAM_NAME               = sy-cprog
+*   I_INTERNAL_TABNAME           = I_INTERNAL_TABNAME
+   I_STRUCTURE_NAME             = 'T001'
+*   I_CLIENT_NEVER_DISPLAY       = 'X'
+*   I_INCLNAME                   = I_INCLNAME
+*   I_BYPASSING_BUFFER           = I_BYPASSING_BUFFER
+*   I_BUFFER_ACTIVE              = I_BUFFER_ACTIVE
+  CHANGING
+    ct_fieldcat                  = it_fcat_t001
+ EXCEPTIONS
+   INCONSISTENT_INTERFACE       = 1
+   PROGRAM_ERROR                = 2
+          .
+
+endform.                    " BUILD_FCAT_T001
+*&---------------------------------------------------------------------*
+*&      Form  BLOCK_LIST_APPEND_T001
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+form BLOCK_LIST_APPEND_T001 .
+CALL FUNCTION 'REUSE_ALV_BLOCK_LIST_APPEND'
+  EXPORTING
+    is_layout                        = wa_layout
+    it_fieldcat                      = it_fcat_t001
+    i_tabname                        = 'IT_T001'
+    it_events                        = it_events
+*   IT_SORT                          = IT_SORT
+*   I_TEXT                           = ' '
+  TABLES
+    t_outtab                         = it_t001
+ EXCEPTIONS
+   PROGRAM_ERROR                    = 1
+   MAXIMUM_OF_APPENDS_REACHED       = 2
+          .
+
+endform.                    " BLOCK_LIST_APPEND_T001
+*&---------------------------------------------------------------------*
+*&      Form  BUILD_FCAT_EKKO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+form BUILD_FCAT_EKKO .
+CALL FUNCTION 'REUSE_ALV_FIELDCATALOG_MERGE'
+ EXPORTING
+   I_PROGRAM_NAME               = sy-cprog
+*   I_INTERNAL_TABNAME           = I_INTERNAL_TABNAME
+   I_STRUCTURE_NAME             = 'EKKO'
+*   I_CLIENT_NEVER_DISPLAY       = 'X'
+*   I_INCLNAME                   = I_INCLNAME
+*   I_BYPASSING_BUFFER           = I_BYPASSING_BUFFER
+*   I_BUFFER_ACTIVE              = I_BUFFER_ACTIVE
+  CHANGING
+    ct_fieldcat                  = it_fcat_ekko
+ EXCEPTIONS
+   INCONSISTENT_INTERFACE       = 1
+   PROGRAM_ERROR                = 2
+          .
+
+endform.                    " BUILD_FCAT_EKKO
+*&---------------------------------------------------------------------*
+*&      Form  BLOCK_LIST_APPEND_EKKO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+form BLOCK_LIST_APPEND_EKKO .
+CALL FUNCTION 'REUSE_ALV_BLOCK_LIST_APPEND'
+  EXPORTING
+    is_layout                        = wa_layout
+    it_fieldcat                      = it_fcat_ekko
+    i_tabname                        = 'IT_EKKO'
+    it_events                        = it_events
+*   IT_SORT                          = IT_SORT
+*   I_TEXT                           = ' '
+  TABLES
+    t_outtab                         = it_ekko
+ EXCEPTIONS
+   PROGRAM_ERROR                    = 1
+   MAXIMUM_OF_APPENDS_REACHED       = 2
+          .
+
+endform.                    " BLOCK_LIST_APPEND_EKKO
+*&---------------------------------------------------------------------*
+*&      Form  BLOCK_LIST_DISPLAY
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+form BLOCK_LIST_DISPLAY .
+CALL FUNCTION 'REUSE_ALV_BLOCK_LIST_DISPLAY'
+* EXPORTING
+*   I_INTERFACE_CHECK             = ' '
+*   IS_PRINT                      = IS_PRINT
+*   I_SCREEN_START_COLUMN         = 0
+*   I_SCREEN_START_LINE           = 0
+*   I_SCREEN_END_COLUMN           = 0
+*   I_SCREEN_END_LINE             = 0
+* IMPORTING
+*   E_EXIT_CAUSED_BY_CALLER       = E_EXIT_CAUSED_BY_CALLER
+*   ES_EXIT_CAUSED_BY_USER        = ES_EXIT_CAUSED_BY_USER
+ EXCEPTIONS
+   PROGRAM_ERROR                 = 1
+          .
+
+endform.                    " BLOCK_LIST_DISPLAY

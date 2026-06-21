@@ -1,0 +1,199 @@
+*&---------------------------------------------------------------------*
+*& Report  ZAF_CALL_TRANSACTION_CONVER
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  zaf_call_transaction_error.
+
+TYPES : BEGIN OF ty_mat,
+        maktx TYPE maktx,
+        meins TYPE meins,
+        END OF ty_mat.
+
+
+TYPES : BEGIN OF ty_error,
+        maktx TYPE maktx,
+        meins TYPE meins,
+        message TYPE string,
+        END OF ty_error.
+
+DATA : it_mat TYPE STANDARD TABLE OF ty_mat,
+       wa_mat TYPE ty_mat,
+       it_bdcdata TYPE STANDARD TABLE OF bdcdata,
+       wa_bdcdata TYPE bdcdata,
+       it_error TYPE STANDARD TABLE OF ty_error,
+       wa_error TYPE ty_error,
+       it_msg TYPE STANDARD TABLE OF bdcmsgcoll,
+       wa_msg TYPE  bdcmsgcoll,
+       lv_msg TYPE string.
+
+PARAMETERS : p_path TYPE string.
+
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR p_path.
+
+  DATA : p_file TYPE ibipparms-path.
+  CALL FUNCTION 'F4_FILENAME'
+    EXPORTING
+      program_name  = syst-cprog
+      dynpro_number = syst-dynnr
+*     FIELD_NAME    = ' '
+    IMPORTING
+      file_name     = p_file.
+
+  p_path = p_file.
+
+START-OF-SELECTION.
+  CALL FUNCTION 'GUI_UPLOAD'
+    EXPORTING
+      filename                      = p_path
+*    FILETYPE                      = 'ASC'
+     has_field_separator           = 'X'
+*    HEADER_LENGTH                 = 0
+*    READ_BY_LINE                  = 'X'
+*    DAT_MODE                      = ' '
+*    CODEPAGE                      = ' '
+*    IGNORE_CERR                   = ABAP_TRUE
+*    REPLACEMENT                   = '#'
+*    CHECK_BOM                     = ' '
+*    VIRUS_SCAN_PROFILE            = VIRUS_SCAN_PROFILE
+*    NO_AUTH_CHECK                 = ' '
+*  IMPORTING
+*    FILELENGTH                    = FILELENGTH
+*    HEADER                        = HEADER
+    TABLES
+      data_tab                      = it_mat
+*  EXCEPTIONS
+*    FILE_OPEN_ERROR               = 1
+*    FILE_READ_ERROR               = 2
+*    NO_BATCH                      = 3
+*    GUI_REFUSE_FILETRANSFER       = 4
+*    INVALID_TYPE                  = 5
+*    NO_AUTHORITY                  = 6
+*    UNKNOWN_ERROR                 = 7
+*    BAD_DATA_FORMAT               = 8
+*    HEADER_NOT_ALLOWED            = 9
+*    SEPARATOR_NOT_ALLOWED         = 10
+*    HEADER_TOO_LONG               = 11
+*    UNKNOWN_DP_ERROR              = 12
+*    ACCESS_DENIED                 = 13
+*    DP_OUT_OF_MEMORY              = 14
+*    DISK_FULL                     = 15
+*    DP_TIMEOUT                    = 16
+            .
+  LOOP AT it_mat INTO wa_mat.
+*   write : / wa_mar-maktx,
+*             wa_mar-meins.
+
+    REFRESH : it_bdcdata,it_msg.
+
+    PERFORM recording.
+    CALL TRANSACTION 'MM01' USING it_bdcdata MODE 'N'  "a-all screens, n-no screens, e-errors screen.
+                            MESSAGES INTO it_msg.
+
+    IF sy-subrc NE 0.
+      wa_error-maktx = wa_mat-maktx.
+      wa_error-meins = wa_mat-meins.
+
+      READ TABLE it_msg INTO wa_msg WITH KEY msgtyp = 'E'.
+      IF sy-subrc EQ 0.
+        CALL FUNCTION 'FORMAT_MESSAGE'
+          EXPORTING
+            id        = wa_msg-msgid
+            lang      = sy-langu
+            no        = wa_msg-msgnr
+            v1        = wa_msg-msgv1
+            v2        = wa_msg-msgv2
+            v3        = wa_msg-msgv3
+            v4        = wa_msg-msgv4
+          IMPORTING
+            msg       = lv_msg
+          EXCEPTIONS
+            not_found = 1.
+        wa_error-message = lv_msg.
+
+      ENDIF.
+
+      APPEND wa_error TO it_error.
+      CLEAR : wa_error,lv_msg.
+
+    ENDIF.
+  ENDLOOP.
+
+  IF it_error IS NOT INITIAL.
+    WRITE :/ 'ERRORS OCCURED...'.
+    ULINE.
+    LOOP AT it_error INTO wa_error.
+      WRITE : / wa_error-maktx,
+                wa_error-meins,
+                wa_error-message.
+      endloop.
+    ENDIF.
+*&---------------------------------------------------------------------*
+*&      Form  RECORDING
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM recording .
+  PERFORM bdc_dynpro      USING 'SAPLMGMM' '0060'.
+  PERFORM bdc_field       USING 'BDC_CURSOR'
+                                'RMMG1-MTART'.
+  PERFORM bdc_field       USING 'BDC_OKCODE'
+                                '=ENTR'.
+  PERFORM bdc_field       USING 'RMMG1-MBRSH'
+                                'C'.
+  PERFORM bdc_field       USING 'RMMG1-MTART'
+                                'HALB'.
+  PERFORM bdc_dynpro      USING 'SAPLMGMM' '0070'.
+  PERFORM bdc_field       USING 'BDC_CURSOR'
+                                'MSICHTAUSW-DYTXT(01)'.
+  PERFORM bdc_field       USING 'BDC_OKCODE'
+                                '=ENTR'.
+  PERFORM bdc_field       USING 'MSICHTAUSW-KZSEL(01)'
+                                'X'.
+  PERFORM bdc_dynpro      USING 'SAPLMGMM' '4004'.
+  PERFORM bdc_field       USING 'BDC_OKCODE'
+                                '/00'.
+  PERFORM bdc_field       USING 'MAKT-MAKTX'
+                                 wa_mat-maktx.
+  PERFORM bdc_field       USING 'BDC_CURSOR'
+                                'MARA-MEINS'.
+  PERFORM bdc_field       USING 'MARA-MEINS'
+                                 wa_mat-meins.
+  PERFORM bdc_dynpro      USING 'SAPLSPO1' '0300'.
+  PERFORM bdc_field       USING 'BDC_OKCODE'
+                                '=YES'.
+ENDFORM.                    " RECORDING
+
+*&---------------------------------------------------------------------*
+*&      Form  BDC_DYNPRO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->PROGRAM    text
+*      -->DYNPRO     text
+*----------------------------------------------------------------------*
+FORM bdc_dynpro USING program dynpro.
+  CLEAR wa_bdcdata.
+  wa_bdcdata-program  = program.
+  wa_bdcdata-dynpro   = dynpro.
+  wa_bdcdata-dynbegin = 'X'.
+  APPEND wa_bdcdata TO it_bdcdata.
+ENDFORM.                    "BDC_DYNPRO
+
+*----------------------------------------------------------------------*
+*        Insert field                                                  *
+*----------------------------------------------------------------------*
+FORM bdc_field USING fnam fval.
+
+  CLEAR wa_bdcdata.
+  wa_bdcdata-fnam = fnam.
+  wa_bdcdata-fval = fval.
+  APPEND wa_bdcdata TO it_bdcdata.
+
+ENDFORM.                    "BDC_FIELD

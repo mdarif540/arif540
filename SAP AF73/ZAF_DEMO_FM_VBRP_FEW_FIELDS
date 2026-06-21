@@ -1,0 +1,29 @@
+*&---------------------------------------------------------------------*
+*& Report  ZAF_DEMO_FM_VBRP_FEW_FIELDS
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  ZAF_DEMO_FM_VBRP_FEW_FIELDS.
+
+data : gt_vbrp type zaf_tt_vbrp,  "tabele type
+       gs_vbrp type zaf_st_vbrp.  "struture type which is in table type
+
+parameters : p_vbeln type vbrp-vbeln.
+
+
+
+CALL FUNCTION 'ZAF_FM_VBRP'
+  EXPORTING
+    p_vbeln       = p_vbeln
+  TABLES
+    it_vbrp       = gt_vbrp
+          .
+
+loop at gt_vbrp into gs_vbrp.
+  write : / gs_vbrp-vbeln,
+            gs_vbrp-posnr,
+            gs_vbrp-uepos.
+  endloop.

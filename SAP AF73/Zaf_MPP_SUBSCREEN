@@ -1,0 +1,55 @@
+*&---------------------------------------------------------------------*
+*& Module Pool       ZAF_MPP_SUBSCREEN
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+PROGRAM  zaf_mpp_subscreen.
+
+TABLES : likp, vbrk.
+DATA : scrno TYPE char4 VALUE '2000'.
+
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_1000  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_1000 INPUT.
+  CASE sy-ucomm.
+    WHEN 'DELV'.
+      scrno = '2000'.
+    WHEN 'INV'.
+      scrno = '3000'.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+  ENDCASE.
+ENDMODULE.                 " USER_COMMAND_1000  INPUT
+
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_2000  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_2000 INPUT.
+  CASE sy-ucomm.
+        WHEN 'DISP'.
+      SELECT SINGLE *
+        FROM likp
+        WHERE vbeln = likp-vbeln.
+  ENDCASE.
+ENDMODULE.                 " USER_COMMAND_2000  INPUT
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_3000  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_3000 INPUT.
+  CASE sy-ucomm.
+  when 'DISP'.
+      SELECT SINGLE *
+        FROM vbrk
+        WHERE vbeln = vbrk-vbeln.
+  ENDCASE.
+ENDMODULE.                 " USER_COMMAND_3000  INPUT

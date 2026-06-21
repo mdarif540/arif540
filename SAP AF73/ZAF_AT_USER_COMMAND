@@ -1,0 +1,241 @@
+*&---------------------------------------------------------------------*
+*& Report  ZAF_AT_USER_COMMAND
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  zaf_at_user_command.
+
+TYPES : BEGIN OF ty_vbak,
+        vbeln TYPE vbeln_va,
+        erdat TYPE  erdat,
+        erzet TYPE  erzet,
+        ernam TYPE  ernam,
+        END OF ty_vbak.
+
+TYPES : BEGIN OF ty_vbap,
+        vbeln TYPE  vbeln_va,
+        posnr TYPE  posnr_va,
+        matnr TYPE  matnr,
+        arktx TYPE  arktx,
+       END OF ty_vbap.
+
+DATA : it_vbak TYPE STANDARD TABLE OF ty_vbak,
+       wa_vbak TYPE ty_vbak,
+       it_vbap TYPE STANDARD TABLE OF ty_vbap,
+       wa_vbap TYPE ty_vbap,
+       lv_box TYPE c,
+       it_selected TYPE STANDARD TABLE OF ty_vbap,
+       p_path TYPE string.
+
+
+DATA : lv_vbeln TYPE vbak-vbeln.
+SELECT-OPTIONS : s_vbeln FOR lv_vbeln.
+
+SET PF-STATUS 'ZSTATUS'.
+SELECT vbeln
+        erdat
+        erzet
+        ernam
+FROM vbak
+INTO TABLE it_vbak
+WHERE vbeln IN s_vbeln.
+
+
+
+LOOP AT it_vbak INTO wa_vbak.
+  WRITE : / lv_box AS CHECKBOX,
+            wa_vbak-vbeln COLOR 1,
+            wa_vbak-erdat COLOR 2,
+            wa_vbak-erzet COLOR 3,
+            wa_vbak-ernam COLOR 4.
+ENDLOOP.
+
+
+AT USER-COMMAND.
+
+  CASE sy-ucomm.
+      WHEN'SALL'.
+      lv_box = 'X'.
+
+      LOOP AT it_vbak INTO wa_vbak.
+        WRITE : / lv_box AS CHECKBOX,
+                  wa_vbak-vbeln,
+                  wa_vbak-erdat,
+                  wa_vbak-erzet,
+                  wa_vbak-ernam.
+      ENDLOOP.
+
+      WHEN'DALL'.
+      lv_box = ' '.
+
+      LOOP AT it_vbak INTO wa_vbak.
+        WRITE : / lv_box AS CHECKBOX,
+                  wa_vbak-vbeln,
+                  wa_vbak-erdat,
+                  wa_vbak-erzet,
+                  wa_vbak-ernam.
+      ENDLOOP.
+      WHEN'ITEMS' .
+      REFRESH it_selected.
+
+
+
+      DATA : lv_count TYPE i.
+      DESCRIBE LIST NUMBER OF LINES lv_count.
+
+      DO lv_count TIMES.
+        READ LINE sy-index
+                  FIELD VALUE lv_box
+                  wa_vbak-vbeln
+                  wa_vbak-erdat
+                  wa_vbak-erzet
+                  wa_vbak-ernam.
+
+        IF sy-subrc EQ 0.
+          IF lv_box = 'X'.
+
+            CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+              EXPORTING
+                input  = wa_vbak-vbeln
+              IMPORTING
+                output = wa_vbak-vbeln.
+
+            APPEND wa_vbak TO it_selected.
+            CLEAR : wa_vbak.
+
+          ENDIF.
+        ENDIF.
+
+      ENDDO.
+
+      IF it_selected IS NOT INITIAL.
+
+
+        SELECT vbeln
+               posnr
+               matnr
+               arktx
+        FROM vbap
+        INTO TABLE it_vbap
+        FOR ALL ENTRIES IN it_selected
+        WHERE vbeln = it_selected-vbeln.
+
+        IF it_vbap IS NOT INITIAL.
+          LOOP AT it_vbap INTO wa_vbap.
+            WRITE : / wa_vbap-vbeln COLOR 5,
+                      wa_vbap-posnr COLOR 6,
+                      wa_vbap-matnr COLOR 5,
+                      wa_vbap-arktx COLOR 6.
+          ENDLOOP.
+
+        ENDIF.
+      ENDIF.
+    WHEN 'DOWNLOAD'.
+
+
+*      DATA : lv_count TYPE i.
+      REFRESH it_selected.
+      DESCRIBE LIST NUMBER OF LINES lv_count.
+
+      DO lv_count TIMES.
+        READ LINE sy-index
+                  FIELD VALUE lv_box
+                  wa_vbak-vbeln
+                  wa_vbak-erdat
+                  wa_vbak-erzet
+                  wa_vbak-ernam.
+
+        IF sy-subrc EQ 0.
+          IF lv_box = 'X'.
+
+            CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+              EXPORTING
+                input  = wa_vbak-vbeln
+              IMPORTING
+                output = wa_vbak-vbeln.
+
+            APPEND wa_vbak TO it_selected.
+            CLEAR : wa_vbak.
+
+          ENDIF.
+        ENDIF.
+
+      ENDDO.
+
+      IF it_selected IS NOT INITIAL.
+
+
+        SELECT vbeln
+               posnr
+               matnr
+               arktx
+        FROM vbap
+        INTO TABLE it_vbap
+        FOR ALL ENTRIES IN it_selected
+        WHERE vbeln = it_selected-vbeln.
+      ENDIF.
+
+      CALL FUNCTION 'GUI_DOWNLOAD'
+        EXPORTING
+*       BIN_FILESIZE                    = BIN_FILESIZE
+          filename                        = p_path
+*       FILETYPE                        = 'ASC'
+*       APPEND                          = ' '
+         write_field_separator           = 'X'
+*       HEADER                          = '00'
+*       TRUNC_TRAILING_BLANKS           = ' '
+*       WRITE_LF                        = 'X'
+*       COL_SELECT                      = ' '
+*       COL_SELECT_MASK                 = ' '
+*       DAT_MODE                        = ' '
+*       CONFIRM_OVERWRITE               = ' '
+*       NO_AUTH_CHECK                   = ' '
+*       CODEPAGE                        = ' '
+*       IGNORE_CERR                     = ABAP_TRUE
+*       REPLACEMENT                     = '#'
+*       WRITE_BOM                       = ' '
+*       TRUNC_TRAILING_BLANKS_EOL       = 'X'
+*       WK1_N_FORMAT                    = ' '
+*       WK1_N_SIZE                      = ' '
+*       WK1_T_FORMAT                    = ' '
+*       WK1_T_SIZE                      = ' '
+*       WRITE_LF_AFTER_LAST_LINE        = ABAP_TRUE
+*       SHOW_TRANSFER_STATUS            = ABAP_TRUE
+*     IMPORTING
+*       FILELENGTH                      = FILELENGTH
+        TABLES
+          data_tab                        = it_vbap
+*       FIELDNAMES                      = FIELDNAMES
+*     EXCEPTIONS
+*       FILE_WRITE_ERROR                = 1
+*       NO_BATCH                        = 2
+*       GUI_REFUSE_FILETRANSFER         = 3
+*       INVALID_TYPE                    = 4
+*       NO_AUTHORITY                    = 5
+*       UNKNOWN_ERROR                   = 6
+*       HEADER_NOT_ALLOWED              = 7
+*       SEPARATOR_NOT_ALLOWED           = 8
+*       FILESIZE_NOT_ALLOWED            = 9
+*       HEADER_TOO_LONG                 = 10
+*       DP_ERROR_CREATE                 = 11
+*       DP_ERROR_SEND                   = 12
+*       DP_ERROR_WRITE                  = 13
+*       UNKNOWN_DP_ERROR                = 14
+*       ACCESS_DENIED                   = 15
+*       DP_OUT_OF_MEMORY                = 16
+*       DISK_FULL                       = 17
+*       DP_TIMEOUT                      = 18
+*       FILE_NOT_FOUND                  = 19
+*       DATAPROVIDER_EXCEPTION          = 20
+*       CONTROL_FLUSH_ERROR             = 21
+                .
+
+
+
+  ENDCASE.
+
+INITIALIZATION.
+  CONCATENATE 'C:\sap\ucomm\' sy-datum sy-uzeit '.XLS' INTO p_path.

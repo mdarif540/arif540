@@ -1,0 +1,115 @@
+*&---------------------------------------------------------------------*
+*& Report  ZAF_FOR_ALL_ENTRIES_2
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  zaf_for_all_entries_2.
+*************************************************************************
+*** Data Declaration Table 1 called [T001].
+*************************************************************************
+TYPES : BEGIN OF ty_t001,
+        bukrs TYPE bukrs,
+        butxt TYPE butxt,
+        ort01 TYPE ort01,
+        land1 TYPE land1,
+        END OF ty_t001.
+
+**************************************************************************
+*** Data Declaration Table 2 called [EEKO].
+**************************************************************************
+TYPES : BEGIN OF ty_ekko,
+        ebeln TYPE ebeln,
+        bukrs TYPE bukrs,
+        bsart TYPE esart,
+        aedat TYPE erdat,
+       END OF ty_ekko.
+
+****************************************************************************
+*** Data Declaration of final table.
+****************************************************************************
+TYPES : BEGIN OF ty_final,
+        bukrs TYPE bukrs,
+        butxt TYPE butxt,
+        ort01 TYPE ort01,
+        land1 TYPE land1,
+        ebeln TYPE ebeln,
+*        BUKRS type BUKRS,
+        bsart TYPE esart,
+        aedat TYPE erdat,
+        END OF ty_final.
+
+DATA : it_t001 TYPE STANDARD TABLE OF ty_t001,
+       wa_t001 TYPE ty_t001,
+       it_ekko TYPE STANDARD TABLE OF ty_ekko,
+       wa_ekko TYPE ty_ekko,
+       it_final TYPE STANDARD TABLE OF ty_final,
+       wa_final TYPE ty_final.
+
+DATA: lv_bukrs TYPE t001-bukrs.
+
+*******************************************************************
+*** Input.
+*******************************************************************
+SELECT-OPTIONS : s_bukrs FOR lv_bukrs.
+
+*******************************************************************
+*** Get Data of table 1 [T001].
+*******************************************************************
+SELECT bukrs
+       butxt
+       ort01
+       land1
+  FROM t001
+  INTO TABLE it_t001
+  WHERE bukrs IN s_bukrs.
+
+*******************************************************************
+*** Get Data of table 2 [EKKO].
+*******************************************************************
+SELECT ebeln
+       bukrs
+       bsart
+       aedat
+  FROM ekko
+  INTO TABLE it_ekko
+  FOR ALL ENTRIES IN it_t001
+  WHERE bukrs = it_t001-bukrs.
+
+*******************************************************************
+*** Processing logic.
+*******************************************************************
+LOOP AT it_t001 INTO wa_t001.
+  wa_final-bukrs = wa_t001-bukrs.
+  wa_final-butxt = wa_t001-butxt.
+  wa_final-ort01 = wa_t001-ort01.
+  wa_final-land1 = wa_t001-land1.
+
+
+  LOOP AT it_ekko INTO wa_ekko WHERE bukrs = wa_t001-bukrs.
+    wa_final-ebeln = wa_ekko-ebeln.
+    wa_final-bsart = wa_ekko-bsart.
+    wa_final-aedat = wa_ekko-aedat.
+
+    APPEND wa_final TO it_final.
+  ENDLOOP.
+
+  CLEAR : wa_final.
+
+ENDLOOP.
+
+********************************************************************
+*** Display.
+********************************************************************
+LOOP AT it_final INTO wa_final.
+  WRITE : / wa_final-bukrs COLOR 1,
+            wa_final-butxt COLOR 2,
+            wa_final-ort01 COLOR 3,
+            wa_final-land1 COLOR 4,
+            wa_final-ebeln COLOR 1,
+            wa_final-bsart COLOR 5,
+            wa_final-aedat COLOR 4.
+
+ENDLOOP.

@@ -1,0 +1,49 @@
+*&---------------------------------------------------------------------*
+*& Report  ZAF_FOR_ALL_ENTRIES
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  zaf_for_all_entries.
+
+INCLUDE zaf_datadeclartion1.
+
+DATA : lv_bukrs TYPE t001-bukrs.
+SELECT-OPTIONS : s_bukrs FOR lv_bukrs.
+
+INCLUDE zaf_get_data_1.
+
+*****processing logic
+LOOP AT it_t001 INTO wa_t001.
+  wa_final-bukrs = wa_t001-bukrs.
+  wa_final-ort01 = wa_t001-ort01.
+  wa_final-land1 = wa_t001-land1.
+  wa_final-adrnr = wa_t001-adrnr.
+
+  LOOP AT it_ekko INTO wa_ekko WHERE bukrs = wa_t001-bukrs.
+    wa_final-ebeln = wa_ekko-ebeln.
+    wa_final-bsart = wa_ekko-bsart.
+    wa_final-aedat = wa_ekko-aedat.
+
+    APPEND wa_final TO it_final.
+
+  ENDLOOP.
+
+  CLEAR : wa_final.
+
+ENDLOOP.
+
+******display
+
+LOOP AT it_final INTO wa_final.
+  WRITE : / wa_final-bukrs color 1,
+            wa_final-ort01 color 3,
+            wa_final-land1 color 4,
+            wa_final-adrnr color 5,
+            wa_final-ebeln color 6,
+            wa_final-bsart color 7,
+            wa_final-aedat color 4.
+
+ENDLOOP.

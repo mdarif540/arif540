@@ -1,0 +1,53 @@
+*&---------------------------------------------------------------------*
+*& Report  ZAF_CM_REPORT
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  zaf_cm_report.
+
+************************************************************************
+* CREATION OF STRUCTURE
+************************************************************************
+
+TYPES : BEGIN OF ty_knb1,
+        kunnr TYPE kunnr,
+        bukrs TYPE bukrs,
+        pernr TYPE pernr_d,
+        erdat TYPE erdat_rf,
+        ernam TYPE ernam_rf,
+       END OF ty_knb1.
+
+**************************************************************************
+* CREATION OF INTERNAL TABLE FROM ABOVE STRUCTURE
+**************************************************************************
+
+DATA : it_knb1 TYPE STANDARD TABLE OF ty_knb1,
+       wa_knb1 TYPE ty_knb1.
+
+***************************************************************************
+* GET DATA
+***************************************************************************
+
+SELECT kunnr                            "1.Customer Number"
+       bukrs                            "2.Company Code"
+       pernr                            "3.Personnel Number"
+       erdat                            "4.Date on which the Record Was Created"
+       ernam                            "5.Name of Person who Created the Object"
+FROM   knb1
+ INTO TABLE it_knb1 UP TO 100 ROWS.
+
+*****************************************************************************
+* DISPLAY
+******************************************************************************
+
+LOOP AT it_knb1 INTO wa_knb1.
+  WRITE : / sy-tabix     COLOR 1,
+            wa_knb1-kunnr COLOR 2,
+            wa_knb1-bukrs COLOR 3,
+            wa_knb1-pernr COLOR 4,
+            wa_knb1-erdat COLOR 5,
+            wa_knb1-ernam COLOR 6.
+ENDLOOP.

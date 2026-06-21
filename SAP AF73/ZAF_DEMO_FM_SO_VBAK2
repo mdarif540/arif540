@@ -1,0 +1,34 @@
+*&---------------------------------------------------------------------*
+*& Report  ZAF_DEMO_FM_SO_VBAK2
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  zaf_demo_fm_so_vbak2.
+
+TYPES : BEGIN OF ty_vbak,
+        vbeln TYPE  vbeln_va,
+        erdat TYPE  erdat,
+        erzet TYPE  erzet,
+        ernam TYPE  ernam,
+        END OF ty_vbak.
+
+DATA : gt_vbak TYPE STANDARD TABLE OF ty_vbak,
+       gs_vbak TYPE ty_vbak,
+       lv_vbeln TYPE vbak-vbeln.
+
+SELECT-OPTIONS : s_vbeln FOR lv_vbeln.
+CALL FUNCTION 'ZAF_FM_SO_VBAK2'
+  EXPORTING
+    i_vbeln  = s_vbeln[]
+  IMPORTING
+    lt_table = gt_vbak.
+
+LOOP AT gt_vbak INTO gs_vbak.
+  WRITE : / gs_vbak-vbeln,
+            gs_vbak-erdat,
+            gs_vbak-erzet,
+            gs_vbak-ernam.
+ENDLOOP.

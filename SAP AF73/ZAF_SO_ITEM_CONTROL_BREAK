@@ -1,0 +1,83 @@
+*&---------------------------------------------------------------------*
+*& Report  ZAF_SO_ITEM_CONTROL_BREAK
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  zaf_so_item_control_break.
+
+TYPES : BEGIN OF ty_final,
+        vbeln TYPE vbeln_va,
+        erdat TYPE  erdat,
+        ernam	TYPE ernam,
+        vbtyp	TYPE vbtyp,
+
+        posnr TYPE  posnr_va,
+        matnr TYPE  matnr,
+        netwr TYPE  netwr_ap,
+        waerk TYPE  waerk,
+        END OF ty_final.
+
+data : it_final type standard table of ty_final,
+       wa_final type ty_final.
+
+DATA : lv_vbeln TYPE vbeln.
+
+SELECT-OPTIONS : s_vbeln FOR lv_vbeln.
+
+SELECT vbak~vbeln
+       vbak~erdat
+       vbak~ernam
+       vbak~vbtyp
+
+       vbap~posnr
+       vbap~matnr
+       vbap~netwr
+       vbap~waerk
+ FROM vbak INNER JOIN vbap
+ ON vbak~vbeln = vbap~vbeln
+ INTO TABLE it_final
+ WHERE vbak~vbeln IN s_vbeln.
+
+LOOP AT it_final INTO wa_final.
+
+  AT FIRST.
+    WRITE : /'********************************************',
+            / '******** SALES ORDER DETAILS REPORT ********',
+            / '********************************************'.
+  ENDAT.
+
+  AT NEW vbeln.
+    ULINE.
+
+    WRITE :/ 'SO NO' COLOR 6, wa_final-vbeln.
+    ULINE.
+
+  ENDAT.
+
+  WRITE :/2 wa_final-vbeln,
+          15 wa_final-posnr,
+          25 wa_final-erdat,
+          35 wa_final-ernam,
+          44 wa_final-vbtyp,
+          55  wa_final-matnr,
+          75 wa_final-netwr,
+          80 wa_final-waerk.
+
+ at end of vbeln.
+   sum.
+
+   uline.
+   write :/ 'TOTAL' color 3, 80 wa_final-netwr.
+   endat.
+
+ at last.
+   skip.
+
+   write :/ '***************************************',
+          / '*********  END OF REPORT **************',
+          / '***************************************'.
+endat.
+ENDLOOP.

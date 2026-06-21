@@ -1,0 +1,57 @@
+*&---------------------------------------------------------------------*
+*& Module Pool       ZAF_MPP_TABSTRIP
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+PROGRAM  zaf_mpp_tabstrip.
+
+TABLES : vbak, ekko.
+DATA : scrno TYPE char4.
+CONTROLS : tstrip TYPE TABSTRIP.
+
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_1000  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_1000 INPUT.
+  CASE sy-ucomm.
+    WHEN 'SALEORD'.
+      scrno = '2000'.
+    WHEN 'PURCHORD'.
+      scrno = '3000'.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+
+  ENDCASE.
+ENDMODULE.                 " USER_COMMAND_1000  INPUT
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_2000  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_2000 INPUT.
+  CASE sy-ucomm.
+    WHEN 'DISP'.
+      SELECT SINGLE *
+        FROM vbak
+        WHERE vbeln = vbak-vbeln.
+
+  ENDCASE.
+ENDMODULE.                 " USER_COMMAND_2000  INPUT
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_3000  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_3000 INPUT.
+  CASE sy-ucomm.
+      SELECT SINGLE *
+        FROM ekko
+        WHERE ebeln = ekko-ebeln.
+
+  ENDCASE.
+ENDMODULE.                 " USER_COMMAND_3000  INPUT

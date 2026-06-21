@@ -1,0 +1,26 @@
+*&---------------------------------------------------------------------*
+*& Report  ZAF_DEMO_FOR_FM_VBAP
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  zaf_demo_for_fm_vbap.
+
+DATA : it_vbap TYPE STANDARD TABLE OF vbap,
+       wa_vbap TYPE vbap.
+
+PARAMETERS : p_vbeln TYPE vbap-vbeln.
+
+CALL FUNCTION 'ZAF_FM_VBAP'
+  EXPORTING
+    p_vbeln = p_vbeln
+  TABLES
+    it_vbap = it_vbap.
+
+loop at it_vbap into wa_vbap.
+  write : / wa_vbap-vbeln,
+            wa_vbap-posnr,
+            wa_vbap-matnr.
+  endloop.

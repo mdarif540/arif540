@@ -1,0 +1,98 @@
+*&---------------------------------------------------------------------*
+*& Report  ZAF_INTERACTIVE_PURCHASE
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  zaf_interactive_purchase.
+
+TYPES : BEGIN OF ty_ekko,
+        ebeln TYPE  ebeln,
+        bukrs TYPE bukrs,
+        bstyp TYPE  ebstyp,
+        bsart TYPE  esart,
+        END OF ty_ekko.
+
+TYPES : BEGIN OF ty_ekpo,
+        ebeln TYPE ebeln,
+        ebelp TYPE ebelp,
+        loekz TYPE eloek,
+        statu TYPE astat,
+        END OF ty_ekpo.
+
+TYPES : BEGIN OF ty_ekkn,
+        ebeln TYPE  ebeln,
+        ebelp TYPE  ebelp,
+        zekkn TYPE  dzekkn,
+        loekz TYPE  kloek,
+        END OF ty_ekkn.
+
+DATA : it_ekko TYPE STANDARD TABLE OF ty_ekko,
+       wa_ekko TYPE ty_ekko,
+       it_ekpo TYPE STANDARD TABLE OF ty_ekpo,
+       wa_ekpo TYPE ty_ekpo,
+       it_ekkn TYPE STANDARD TABLE OF ty_ekkn,
+       wa_ekkn TYPE ty_ekkn.
+
+DATA : lv_ebeln TYPE ekko-ebeln.
+SELECT-OPTIONS : s_ebeln FOR lv_ebeln.
+
+SELECT ebeln
+       bukrs
+       bstyp
+       bsart
+FROM ekko
+INTO TABLE it_ekko
+WHERE ebeln IN s_ebeln.
+
+LOOP AT it_ekko INTO wa_ekko.
+  WRITE :/ wa_ekko-ebeln COLOR 1 HOTSPOT ON,
+           wa_ekko-bukrs COLOR 2,
+           wa_ekko-bstyp COLOR 3,
+           wa_ekko-bsart COLOR 4.
+
+  HIDE : wa_ekko-ebeln.
+ENDLOOP.
+
+AT LINE-SELECTION.
+
+  CASE sy-lsind.
+    WHEN 1.
+
+      SELECT ebeln
+             ebelp
+             loekz
+             statu
+      FROM ekpo
+      INTO TABLE it_ekpo
+      WHERE ebeln = wa_ekko-ebeln.
+
+      IF it_ekpo IS NOT INITIAL.
+        LOOP AT it_ekpo INTO wa_ekpo.
+          WRITE :/ wa_ekpo-ebeln COLOR 1,
+                   wa_ekpo-ebelp COLOR 2,
+                   wa_ekpo-loekz COLOR 3,
+                   wa_ekpo-statu COLOR 4.
+        ENDLOOP.
+      ENDIF.
+
+    WHEN 2.
+      SELECT ebeln
+             ebelp
+             zekkn
+             loekz
+      FROM ekkn
+      INTO TABLE it_ekkn
+      WHERE ebelp = wa_ekpo-ebelp.
+
+      IF it_ekkn IS NOT INITIAL.
+        LOOP AT it_ekkn INTO wa_ekkn.
+          WRITE :/ wa_ekkn-ebeln COLOR 1,
+                   wa_ekkn-ebelp COLOR 2,
+                   wa_ekkn-zekkn COLOR 3,
+                   wa_ekkn-loekz COLOR 1.
+        ENDLOOP.
+      ENDIF.
+  ENDCASE.

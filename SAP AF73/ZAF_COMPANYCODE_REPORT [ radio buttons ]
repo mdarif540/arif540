@@ -1,0 +1,144 @@
+*&---------------------------------------------------------------------*
+*& Report  ZAF_COMPANYCODE_REPORT
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  zaf_companycode_report.
+********************************************************************
+* Declaration
+********************************************************************
+
+DATA : it_t001 TYPE STANDARD TABLE OF t001,
+       wa_t001 TYPE t001,
+       lv_bukrs TYPE bukrs.
+
+
+********************************************************************
+* input
+*********************************************************************
+
+*parameters : p_bukrs type bukrs.
+data : lv_spras type spras.
+*SELECT-OPTIONS : s_spras FOR lv_spras.
+*SELECT-OPTIONS : s_spras FOR lv_spras no intervals.
+*SELECT-OPTIONS : s_spras FOR lv_spras no-extension.
+*SELECT-OPTIONS : s_spras FOR lv_spras no intervals no-extension.
+SELECT-OPTIONS : s_spras FOR lv_spras.
+
+
+
+SELECTION-SCREEN  BEGIN OF BLOCK b1 WITH FRAME TITLE text-001.
+*PARAMETERS : p_bukrs TYPE t001-bukrs OBLIGATORY.
+*PARAMETERS : p_bukrs TYPE t001-bukrs OBLIGATORY DEFAULT '0001'.
+PARAMETERS : rb_0001 RADIOBUTTON GROUP g1,
+             rb_0005 RADIOBUTTON GROUP g1,
+             rb_0006 RADIOBUTTON GROUP g1,
+             rb_0007 RADIOBUTTON GROUP g1.
+SELECTION-SCREEN END OF BLOCK b1.
+
+SELECTION-SCREEN BEGIN OF BLOCK b2 WITH FRAME TITLE text-002.
+PARAMETERS : cb_disp AS CHECKBOX,
+             cb_down AS CHECKBOX.
+PARAMETERS : p_path TYPE string.
+SELECTION-SCREEN END OF BLOCK b2.
+**********************************************************************
+* get data
+**********************************************************************
+
+IF rb_0001 = 'X'.
+  lv_bukrs = '0001'.
+ELSEIF rb_0005 = 'X'.
+  lv_bukrs = '0005'.
+ELSEIF rb_0006 = 'X'.
+  lv_bukrs = '0006'.
+ELSE.
+  lv_bukrs = '0007'.
+ENDIF.
+
+
+
+SELECT * FROM t001
+  INTO TABLE it_t001
+*WHERE bukrs = p_bukrs.     " for parameters"
+  WHERE spras IN s_spras
+  and bukrs = lv_bukrs.
+************************************************************
+* display
+************************************************************
+
+IF cb_disp = 'X'.
+
+  LOOP AT it_t001 INTO wa_t001.
+    WRITE : / wa_t001-bukrs,
+              wa_t001-ort01,
+              wa_t001-spras,
+              wa_t001-rcomp.
+  ENDLOOP.
+ENDIF.
+*************************************************************
+*display functionlatiy
+*************************************************************
+IF cb_down = 'X'.
+  CALL FUNCTION 'GUI_DOWNLOAD'
+    EXPORTING
+*        BIN_FILESIZE                    = BIN_FILESIZE
+      filename                        = p_path           "target location for file"
+*        FILETYPE                        = 'ASC'
+*        APPEND                          = ' '
+        write_field_separator           = 'X'
+*        HEADER                          = '00'
+*        TRUNC_TRAILING_BLANKS           = ' '
+*        WRITE_LF                        = 'X'
+*        COL_SELECT                      = ' '
+*        COL_SELECT_MASK                 = ' '
+*        DAT_MODE                        = ' '
+*        CONFIRM_OVERWRITE               = ' '
+*        NO_AUTH_CHECK                   = ' '
+*        CODEPAGE                        = ' '
+*        IGNORE_CERR                     = ABAP_TRUE
+*        REPLACEMENT                     = '#'
+*        WRITE_BOM                       = ' '
+*        TRUNC_TRAILING_BLANKS_EOL       = 'X'
+*        WK1_N_FORMAT                    = ' '
+*        WK1_N_SIZE                      = ' '
+*        WK1_T_FORMAT                    = ' '
+*        WK1_T_SIZE                      = ' '
+*        WRITE_LF_AFTER_LAST_LINE        = ABAP_TRUE
+*        SHOW_TRANSFER_STATUS            = ABAP_TRUE
+*      IMPORTING
+*        FILELENGTH                      = FILELENGTH
+    TABLES
+      data_tab                        = it_t001
+*        FIELDNAMES                      = FIELDNAMES
+*      EXCEPTIONS
+*        FILE_WRITE_ERROR                = 1
+*        NO_BATCH                        = 2
+*        GUI_REFUSE_FILETRANSFER         = 3
+*        INVALID_TYPE                    = 4
+*        NO_AUTHORITY                    = 5
+*        UNKNOWN_ERROR                   = 6
+*        HEADER_NOT_ALLOWED              = 7
+*        SEPARATOR_NOT_ALLOWED           = 8
+*        FILESIZE_NOT_ALLOWED            = 9
+*        HEADER_TOO_LONG                 = 10
+*        DP_ERROR_CREATE                 = 11
+*        DP_ERROR_SEND                   = 12
+*        DP_ERROR_WRITE                  = 13
+*        UNKNOWN_DP_ERROR                = 14
+*        ACCESS_DENIED                   = 15
+*        DP_OUT_OF_MEMORY                = 16
+*        DISK_FULL                       = 17
+*        DP_TIMEOUT                      = 18
+*        FILE_NOT_FOUND                  = 19
+*        DATAPROVIDER_EXCEPTION          = 20
+*        CONTROL_FLUSH_ERROR             = 21
+                      .
+
+
+ENDIF.
+
+*  INITIALIZATION.
+  CONCATENATE 'C:\sap\af' sy-datum sy-uzeit '.XLS' into p_path.

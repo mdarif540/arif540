@@ -1,0 +1,205 @@
+*&---------------------------------------------------------------------*
+*& Report  ZAF_HIERARCHIAL_ALV
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  zaf_hierarchial_alv.
+
+TYPES : BEGIN OF ty_vbrk,
+       vbeln TYPE vbeln,
+       knumv TYPE knumv,
+       fkdat TYPE fkdat,
+       bzirk TYPE bzirk,
+       expand TYPE c,           " Hierarchy
+   END OF ty_vbrk.
+
+TYPES  : BEGIN OF ty_vbrp,
+        vbeln TYPE vbeln_vf,
+        posnr TYPE posnr_vf,
+        brgew TYPE brgew_15,
+        netwr TYPE netwr_fp,
+  END OF ty_vbrp.
+
+DATA : it_vbrk TYPE STANDARD TABLE OF ty_vbrk,
+       it_vbrp TYPE STANDARD TABLE OF ty_vbrp,
+       it_fcat TYPE slis_t_fieldcat_alv,
+       wa_fcat TYPE slis_fieldcat_alv,
+       wa_key type slis_keyinfo_alv,
+       wa_layout type slis_layout_alv.
+
+data : lv_vbeln TYPE vbeln_vf.
+
+SELECT-OPTIONS : s_vbeln FOR lv_vbeln.
+
+start-of-selection.
+
+SELECT vbeln
+         knumv
+         fkdat
+         bzirk
+    FROM vbrk
+    INTO TABLE it_vbrk
+    WHERE vbeln IN s_vbeln.
+
+IF it_vbrk IS  NOT INITIAL.
+
+  SELECT vbeln
+         posnr
+         brgew
+         netwr
+    FROM vbrp
+    INTO TABLE it_vbrp
+    FOR ALL ENTRIES IN it_vbrk
+    WHERE vbeln = it_vbrk-vbeln.
+
+ENDIF.
+
+wa_key-header01 = 'VBELN'.
+wa_key-ITEM01 = 'VBELN'.
+
+wa_layout-colwidth_optimize = 'X'.
+wa_layout-expand_fieldname = 'EXPAND'.     " Same as declared in ty_vbrk
+
+perform build_fcat.
+
+CALL FUNCTION 'REUSE_ALV_HIERSEQ_LIST_DISPLAY'
+  EXPORTING
+*   I_INTERFACE_CHECK              = ' '
+   I_CALLBACK_PROGRAM             = sy-repid
+*   I_CALLBACK_PF_STATUS_SET       = ' '
+*   I_CALLBACK_USER_COMMAND        = ' '
+   IS_LAYOUT                      = wa_layout
+   IT_FIELDCAT                    = it_fcat
+*   IT_EXCLUDING                   =
+*   IT_SPECIAL_GROUPS              =
+*   IT_SORT                        =
+*   IT_FILTER                      =
+*   IS_SEL_HIDE                    =
+*   I_SCREEN_START_COLUMN          = 0
+*   I_SCREEN_START_LINE            = 0
+*   I_SCREEN_END_COLUMN            = 0
+*   I_SCREEN_END_LINE              = 0
+*   I_DEFAULT                      = 'X'
+*   I_SAVE                         = ' '
+*   IS_VARIANT                     =
+*   IT_EVENTS                      =
+*   IT_EVENT_EXIT                  =
+    i_tabname_header               = 'VBRK'
+    i_tabname_item                 = 'VBRP'
+*   I_STRUCTURE_NAME_HEADER        =
+*   I_STRUCTURE_NAME_ITEM          =
+    is_keyinfo                     = WA_KEY
+*   IS_PRINT                       =
+*   IS_REPREP_ID                   =
+*   I_BYPASSING_BUFFER             =
+*   I_BUFFER_ACTIVE                =
+*   IR_SALV_HIERSEQ_ADAPTER        =
+*   IT_EXCEPT_QINFO                =
+*   I_SUPPRESS_EMPTY_DATA          = ABAP_FALSE
+* IMPORTING
+*   E_EXIT_CAUSED_BY_CALLER        =
+*   ES_EXIT_CAUSED_BY_USER         =
+  TABLES
+    t_outtab_header                = it_vbrk
+    t_outtab_item                  = it_vbrp
+ EXCEPTIONS
+   PROGRAM_ERROR                  = 1
+   OTHERS                         = 2
+          .
+IF sy-subrc <> 0.
+* Implement suitable error handling here
+ENDIF.
+
+*&---------------------------------------------------------------------*
+*&      Form  BUILD_FCAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+form BUILD_FCAT .
+  wa_fcat-col_pos = '1'.
+  wa_fcat-fieldname = 'VBELN'.
+  wa_fcat-seltext_m = 'BILLING DOCUMENT'.
+  wa_fcat-emphasize = 'C100'.
+  wa_fcat-tabname = 'VBRK'.
+
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+
+  wa_fcat-col_pos = '2'.
+  wa_fcat-fieldname = 'KNUMV'.
+  wa_fcat-seltext_m = 'NUM OF DOCUMENT'.
+  wa_fcat-emphasize = 'C200'.
+  wa_fcat-tabname = 'VBRK'.
+
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+
+  wa_fcat-col_pos = '3'.
+  wa_fcat-fieldname = 'FKDAT'.
+  wa_fcat-seltext_m = 'BILLING DATE'.
+  wa_fcat-emphasize = 'C300'.
+  wa_fcat-tabname = 'VBRK'.
+
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+
+  wa_fcat-col_pos = '4'.
+  wa_fcat-fieldname = 'BZIRK'.
+  wa_fcat-seltext_m = 'SALES DISTRICT'.
+  wa_fcat-emphasize = 'C400'.
+  wa_fcat-tabname = 'VBRK'.
+
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+
+
+  wa_fcat-col_pos = '5'.
+  wa_fcat-fieldname = 'VBELN'.
+  wa_fcat-seltext_m = 'BILLING DOCUMENT'.
+  wa_fcat-emphasize = 'C400'.
+  wa_fcat-tabname = 'VBRP'.
+
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+
+  wa_fcat-col_pos = '6'.
+  wa_fcat-fieldname = 'POSNR'.
+  wa_fcat-seltext_m = 'BILLING ITEM'.
+  wa_fcat-emphasize = 'C400'.
+  wa_fcat-tabname = 'VBRP'.
+
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+
+
+  wa_fcat-col_pos = '7'.
+  wa_fcat-fieldname = 'BRGEW'.
+  wa_fcat-seltext_m = 'GROSS WEIGHT'.
+  wa_fcat-emphasize = 'C400'.
+  wa_fcat-tabname = 'VBRP'.
+
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+
+
+  wa_fcat-col_pos = '8'.
+  wa_fcat-fieldname = 'NETWR'.
+  wa_fcat-seltext_m = 'NET VALUE'.
+  wa_fcat-emphasize = 'C400'.
+  wa_fcat-tabname = 'VBRP'.
+
+  APPEND wa_fcat TO it_fcat.
+  CLEAR wa_fcat.
+endform.                    " BUILD_FCAT

@@ -1,0 +1,34 @@
+*&---------------------------------------------------------------------*
+*& Report  ZAF_INVOICE_FM
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  zaf_invoice_fm.
+
+
+TYPES : BEGIN OF ty_vbrp,
+        vbeln TYPE vbeln_vf,
+        posnr TYPE posnr_vf,
+        uepos TYPE uepos,
+        END OF ty_vbrp.
+
+DATA : gt_vbrp TYPE STANDARD TABLE OF ty_vbrp,
+      gs_vbrp TYPE ty_vbrp,
+      lv_vbeln TYPE vbrp-vbeln.
+
+SELECT-OPTIONS : s_vbeln FOR lv_vbeln.
+
+CALL FUNCTION 'ZAF_FM_SO1'
+  EXPORTING
+    i_vbeln  = s_vbeln[]
+  IMPORTING
+    lt_table = gt_vbrp.
+LOOP AT gt_vbrp INTO gs_vbrp.
+  WRITE : / gs_vbrp-vbeln,
+            gs_vbrp-posnr,
+            gs_vbrp-uepos.
+
+ENDLOOP.

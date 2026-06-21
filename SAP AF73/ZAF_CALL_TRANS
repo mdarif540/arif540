@@ -1,0 +1,44 @@
+report ZAF_CALL_TRANS
+       no standard page heading line-size 255.
+
+include bdcrecx1.
+
+start-of-selection.
+
+perform open_group.
+
+perform bdc_dynpro      using 'SAPLMGMM' '0060'.
+perform bdc_field       using 'BDC_CURSOR'
+                              'RMMG1-MATNR'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '=ENTR'.
+perform bdc_field       using 'RMMG1-MBRSH'
+                              'C'.
+perform bdc_field       using 'RMMG1-MTART'
+                              'AEM'.
+perform bdc_dynpro      using 'SAPLMGMM' '0070'.
+perform bdc_field       using 'BDC_CURSOR'
+                              'MSICHTAUSW-DYTXT(01)'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '=ENTR'.
+perform bdc_field       using 'MSICHTAUSW-KZSEL(01)'
+                              'X'.
+perform bdc_dynpro      using 'SAPLMGMM' '4004'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '/00'.
+perform bdc_field       using 'BDC_CURSOR'
+                              'MAKT-MAKTX'.
+perform bdc_field       using 'MAKT-MAKTX'
+                              'keyboard'.
+perform bdc_field       using 'BDC_CURSOR'
+                              'MARA-MEINS'.
+perform bdc_field       using 'MARA-MEINS'
+                              'pc'.
+perform bdc_field       using 'MARA-MTPOS_MARA'
+                              'ZMUS'.
+perform bdc_dynpro      using 'SAPLSPO1' '0300'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '=YES'.
+perform bdc_transaction using 'MM01'.
+
+perform close_group.

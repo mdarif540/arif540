@@ -1,0 +1,100 @@
+*&---------------------------------------------------------------------*
+*& Report  ZAF_INRACTIVE_FOR_ORD_T0_DELI
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  zaf_inractive_for_ord_t0_deli.
+
+
+TYPES : BEGIN OF ty_vbak,
+        vbeln TYPE vbeln_va,
+        erdat TYPE erdat,
+        erzet TYPE erzet,
+        ernam TYPE ernam,
+        END OF ty_vbak.
+
+TYPES : BEGIN OF ty_vbrp,
+        vbeln TYPE vbeln_vf,
+        posnr TYPE posnr_vf,
+        uepos TYPE uepos,
+        ernam TYPE ernam,
+        END OF ty_vbrp.
+
+TYPES : BEGIN OF ty_vttk,
+        tknum TYPE tknum,
+        shtyp TYPE shtyp,
+        ernam TYPE ernam,
+        erdat TYPE erdat,
+        END OF ty_vttk.
+
+DATA : it_vbak TYPE STANDARD TABLE OF ty_vbak,
+       wa_vbak TYPE ty_vbak,
+       it_vbrp TYPE STANDARD TABLE OF ty_vbrp,
+       wa_vbrp TYPE ty_vbrp,
+       it_vttk TYPE STANDARD TABLE OF ty_vttk,
+       wa_vttk TYPE ty_vttk.
+
+DATA : lv_vbeln TYPE vbak-vbeln.
+
+SELECT-OPTIONS : s_vbeln FOR lv_vbeln.
+
+SELECT vbeln
+       erdat
+       erzet
+       ernam
+FROM vbak
+INTO TABLE it_vbak
+WHERE vbeln IN s_vbeln.
+
+LOOP AT it_vbak INTO wa_vbak.
+  WRITE :/ wa_vbak-vbeln COLOR 1 HOTSPOT ON,
+           wa_vbak-erdat COLOR 2,
+           wa_vbak-erzet COLOR 3,
+           wa_vbak-ernam COLOR 4.
+
+  HIDE : wa_vbak-vbeln.
+ENDLOOP.
+
+AT LINE-SELECTION.
+  CASE sy-lsind.
+    WHEN 1.
+      SELECT vbeln
+             posnr
+             uepos
+             ernam
+FROM vbrp
+INTO TABLE it_vbrp
+WHERE vbeln = wa_vbak-vbeln.
+
+      IF it_vbrp IS NOT INITIAL.
+        LOOP AT it_vbrp INTO wa_vbrp.
+          WRITE :/ wa_vbrp-vbeln,
+                   wa_vbrp-posnr,
+                   wa_vbrp-uepos,
+                   wa_vbrp-ernam.
+
+          HIDE : wa_vbrp-ernam.
+        ENDLOOP.
+      ENDIF.
+
+    WHEN 2.
+      SELECT tknum
+             shtyp
+             ernam
+             erdat
+      FROM vttk
+      INTO TABLE it_vttk
+      WHERE ernam = wa_vbrp-ernam.
+
+      IF it_vttk IS NOT INITIAL.
+        LOOP AT it_vttk INTO wa_vttk.
+          WRITE :/ wa_vttk-tknum,
+                   wa_vttk-shtyp,
+                   wa_vttk-ernam,
+                   wa_vttk-erdat.
+        ENDLOOP.
+      ENDIF.
+  ENDCASE.

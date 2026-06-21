@@ -1,0 +1,34 @@
+*&---------------------------------------------------------------------*
+*& Report  ZAF_SO_VBRP2
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  zaf_so_vbrp2.
+
+TYPES : BEGIN OF ty_vbrp,
+        vbeln TYPE vbeln_vf,
+        posnr TYPE posnr_vf,
+        uepos TYPE uepos,
+        END OF ty_vbrp.
+
+DATA : lt_vbrp TYPE standard table of ty_vbrp,
+       ls_vbrp TYPE ty_vbrp.
+
+DATA : lv_vbeln TYPE vbeln.
+SELECT-OPTIONS : s_vbeln FOR lv_vbeln.
+CALL FUNCTION 'ZAF_FM_SO1'
+  EXPORTING
+    i_vbeln        = s_vbeln[]
+ IMPORTING
+   LT_TABLE       = lt_vbrp
+          .
+
+LOOP AT lt_vbrp INTO ls_vbrp.
+
+  WRITE : / ls_vbrp-vbeln,
+            ls_vbrp-posnr,
+            ls_vbrp-uepos.
+ENDLOOP.

@@ -1,0 +1,203 @@
+*&---------------------------------------------------------------------*
+*& Report  ZAF_BLOCKED_ALV
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  zaf_blocked_alv.
+
+
+DATA : it_t001 TYPE STANDARD TABLE OF t001,
+       it_knb1 TYPE STANDARD TABLE OF knb1,
+       it_fcat_t001 TYPE slis_t_fieldcat_alv,
+       it_fcat_knb1 TYPE slis_t_fieldcat_alv,
+       wa_layout TYPE slis_layout_alv,
+       it_events TYPE slis_t_event.
+
+DATA : lv_bukrs TYPE bukrs.
+SELECT-OPTIONS : s_bukrs FOR lv_bukrs.
+
+START-OF-SELECTION.
+
+  wa_layout-colwidth_optimize = 'X'.
+  wa_layout-zebra = 'X'.
+
+  PERFORM get_data.
+
+  PERFORM blocked_alv_initialization.
+
+  PERFORM build_fcat_t001.
+  PERFORM block_list_append_t001.
+
+  PERFORM build_fcat_knb1.
+  PERFORM block_list_append_knb1.
+
+  PERFORM block_list_display.
+
+*&---------------------------------------------------------------------*
+*&      Form  GET_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_data .
+  SELECT *
+    FROM t001
+    INTO TABLE it_t001
+    WHERE bukrs IN s_bukrs.
+
+  IF it_t001 IS NOT INITIAL.
+    SELECT *
+      FROM knb1
+      INTO TABLE it_knb1
+      FOR ALL ENTRIES IN it_t001
+      WHERE bukrs = it_t001-bukrs.
+  ENDIF.
+ENDFORM.                    " GET_DATA
+*&---------------------------------------------------------------------*
+*&      Form  BLOCKED_ALV_INITIALIZATION
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM blocked_alv_initialization .
+  CALL FUNCTION 'REUSE_ALV_BLOCK_LIST_INIT'
+    EXPORTING
+      i_callback_program       = sy-cprog
+*     I_CALLBACK_PF_STATUS_SET = ' '
+*     I_CALLBACK_USER_COMMAND  = ' '
+*     IT_EXCLUDING             =    IT_EXCLUDING
+    .
+
+
+ENDFORM.                    " BLOCKED_ALV_INITIALIZATION
+*&---------------------------------------------------------------------*
+*&      Form  BUILD_FCAT_T001
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM build_fcat_t001 .
+  CALL FUNCTION 'REUSE_ALV_FIELDCATALOG_MERGE'
+    EXPORTING
+      i_program_name         = sy-cprog
+*     I_INTERNAL_TABNAME     = I_INTERNAL_TABNAME
+      i_structure_name       = 'T001'
+*     I_CLIENT_NEVER_DISPLAY = 'X'
+*     I_INCLNAME             = I_INCLNAME
+*     I_BYPASSING_BUFFER     = I_BYPASSING_BUFFER
+*     I_BUFFER_ACTIVE        = I_BUFFER_ACTIVE
+    CHANGING
+      ct_fieldcat            = it_fcat_t001
+    EXCEPTIONS
+      inconsistent_interface = 1
+      program_error          = 2.
+
+ENDFORM.                    " BUILD_FCAT_T001
+*&---------------------------------------------------------------------*
+*&      Form  BLOCK_LIST_APPEND_T001
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM block_list_append_t001 .
+  CALL FUNCTION 'REUSE_ALV_BLOCK_LIST_APPEND'
+    EXPORTING
+      is_layout                        = wa_layout
+      it_fieldcat                      = it_fcat_t001
+      i_tabname                        = 'IT_T001'
+      it_events                        = it_events
+*   IT_SORT                          = IT_SORT
+*   I_TEXT                           = ' '
+    TABLES
+      t_outtab                         = it_t001
+* EXCEPTIONS
+*   PROGRAM_ERROR                    = 1
+*   MAXIMUM_OF_APPENDS_REACHED       = 2
+            .
+
+ENDFORM.                    " BLOCK_LIST_APPEND_T001
+*&---------------------------------------------------------------------*
+*&      Form  BUILF_FCAT_KNB1
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM build_fcat_knb1 .
+  CALL FUNCTION 'REUSE_ALV_FIELDCATALOG_MERGE'
+    EXPORTING
+      i_program_name         = sy-cprog
+*     I_INTERNAL_TABNAME     = I_INTERNAL_TABNAME
+      i_structure_name       = 'KNB1'
+*     I_CLIENT_NEVER_DISPLAY = 'X'
+*     I_INCLNAME             = I_INCLNAME
+*     I_BYPASSING_BUFFER     = I_BYPASSING_BUFFER
+*     I_BUFFER_ACTIVE        = I_BUFFER_ACTIVE
+    CHANGING
+      ct_fieldcat            = it_fcat_knb1
+    EXCEPTIONS
+      inconsistent_interface = 1
+      program_error          = 2.
+
+ENDFORM.                    " BUILF_FCAT_KNB1
+*&---------------------------------------------------------------------*
+*&      Form  BLOCK_LIST_APPEND_KNB1
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM block_list_append_knb1 .
+  CALL FUNCTION 'REUSE_ALV_BLOCK_LIST_APPEND'
+    EXPORTING
+      is_layout                  = wa_layout
+      it_fieldcat                = it_fcat_knb1
+      i_tabname                  = 'IT_KNB1'
+      it_events                  = it_events
+*     IT_SORT                    = IT_SORT
+*     I_TEXT                     = ' '
+    TABLES
+      t_outtab                   = it_knb1
+    EXCEPTIONS
+      program_error              = 1
+      maximum_of_appends_reached = 2.
+
+ENDFORM.                    " BLOCK_LIST_APPEND_KNB1
+*&---------------------------------------------------------------------*
+*&      Form  BLOCK_LIST_DISPLAY
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM block_list_display .
+  CALL FUNCTION 'REUSE_ALV_BLOCK_LIST_DISPLAY'
+* EXPORTING
+*   I_INTERFACE_CHECK             = ' '
+*   IS_PRINT                      = IS_PRINT
+*   I_SCREEN_START_COLUMN         = 0
+*   I_SCREEN_START_LINE           = 0
+*   I_SCREEN_END_COLUMN           = 0
+*   I_SCREEN_END_LINE             = 0
+* IMPORTING
+*   E_EXIT_CAUSED_BY_CALLER       = E_EXIT_CAUSED_BY_CALLER
+*   ES_EXIT_CAUSED_BY_USER        = ES_EXIT_CAUSED_BY_USER
+   EXCEPTIONS
+     program_error                 = 1
+            .
+
+ENDFORM.                    " BLOCK_LIST_DISPLAY

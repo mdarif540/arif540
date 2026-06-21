@@ -1,0 +1,156 @@
+*&---------------------------------------------------------------------*
+*& Report  ZAF_ALV_INVOICE_MANUAL
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  ZAF_ALV_INVOICE_MANUAL.
+
+types : begin of ty_likp,
+        VBELN type VBELN_VL,
+        ERNAM type ERNAM,
+        ERDAT type ERDAT,
+        VSTEL type  VSTEL,
+        end of ty_likp.
+
+data : it_likp type standard table of ty_likp,
+       wa_likp type ty_likp,
+       it_fcat type slis_t_fieldcat_alv,
+       wa_fcat type slis_fieldcat_alv.
+
+data : lv_vbeln type likp-vbeln.
+select-options : s_vbeln for lv_VBELN.
+
+start-of-selection.
+
+perform get_data.
+perform build_fcat.
+perform display_alv.
+
+
+
+*&---------------------------------------------------------------------*
+*&      Form  GET_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+form GET_DATA .
+select vbeln
+       ernam
+       erdat
+       vstel
+from likp
+into table it_likp
+where vbeln in s_vbeln.
+endform.                    " GET_DATA
+
+*&---------------------------------------------------------------------*
+*&      Form  BUILD_FCAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+form BUILD_FCAT .
+wa_fcat-col_pos = '1'.
+wa_fcat-FIELDNAME = 'VBELN'.
+wa_fcat-tabname = 'LIKP'.
+wa_fcat-SELTEXT_L = 'DELIVERY NO'.
+wa_fcat-emphasize = 'C102'.
+wa_fcat-HOTSPOT = 'X'.
+
+append : wa_fcat to it_fcat.
+clear : wa_fcat.
+
+wa_fcat-col_pos = '2'.
+wa_fcat-FIELDNAME = 'ERNAM'.
+wa_fcat-tabname = 'LIKP'.
+wa_fcat-SELTEXT_L = 'CREATED BY'.
+wa_fcat-emphasize = 'C601'.
+
+append : wa_fcat to it_fcat.
+clear : wa_fcat.
+
+wa_fcat-col_pos = '3'.
+wa_fcat-FIELDNAME = 'ERNAM'.
+wa_fcat-tabname = 'LIKP'.
+wa_fcat-SELTEXT_L = 'CREATED ON'.
+wa_fcat-emphasize = 'C401'.
+
+append : wa_fcat to it_fcat.
+clear : wa_fcat.
+
+wa_fcat-col_pos = '4'.
+wa_fcat-FIELDNAME = 'VSTEL'.
+wa_fcat-tabname = 'LIKP'.
+wa_fcat-SELTEXT_L = 'SHIPPING POINT'.
+wa_fcat-emphasize = 'C501'.
+
+append : wa_fcat to it_fcat.
+clear : wa_fcat.
+endform.                    " BUILD_FCAT
+
+*-------------------------------------------------------------------------------------------------------------------------------------------*
+*&      Form  DISPLAY_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+form DISPLAY_ALV .
+CALL FUNCTION 'REUSE_ALV_GRID_DISPLAY'
+ EXPORTING
+*   I_INTERFACE_CHECK                 = ' '
+*   I_BYPASSING_BUFFER                = ' '
+*   I_BUFFER_ACTIVE                   = ' '
+   I_CALLBACK_PROGRAM                = sy-cprog
+*   I_CALLBACK_PF_STATUS_SET          = ' '
+*   I_CALLBACK_USER_COMMAND           = ' '
+*   I_CALLBACK_TOP_OF_PAGE            = ' '
+*   I_CALLBACK_HTML_TOP_OF_PAGE       = ' '
+*   I_CALLBACK_HTML_END_OF_LIST       = ' '
+*   I_STRUCTURE_NAME                  = I_STRUCTURE_NAME
+*   I_BACKGROUND_ID                   = ' '
+*   I_GRID_TITLE                      = I_GRID_TITLE
+*   I_GRID_SETTINGS                   = I_GRID_SETTINGS
+*   IS_LAYOUT                         = IS_LAYOUT
+   IT_FIELDCAT                       = it_fcat
+*   IT_EXCLUDING                      = IT_EXCLUDING
+*   IT_SPECIAL_GROUPS                 = IT_SPECIAL_GROUPS
+*   IT_SORT                           = IT_SORT
+*   IT_FILTER                         = IT_FILTER
+*   IS_SEL_HIDE                       = IS_SEL_HIDE
+*   I_DEFAULT                         = 'X'
+*   I_SAVE                            = ' '
+*   IS_VARIANT                        = IS_VARIANT
+*   IT_EVENTS                         = IT_EVENTS
+*   IT_EVENT_EXIT                     = IT_EVENT_EXIT
+*   IS_PRINT                          = IS_PRINT
+*   IS_REPREP_ID                      = IS_REPREP_ID
+*   I_SCREEN_START_COLUMN             = 0
+*   I_SCREEN_START_LINE               = 0
+*   I_SCREEN_END_COLUMN               = 0
+*   I_SCREEN_END_LINE                 = 0
+*   I_HTML_HEIGHT_TOP                 = 0
+*   I_HTML_HEIGHT_END                 = 0
+*   IT_ALV_GRAPHICS                   = IT_ALV_GRAPHICS
+*   IT_HYPERLINK                      = IT_HYPERLINK
+*   IT_ADD_FIELDCAT                   = IT_ADD_FIELDCAT
+*   IT_EXCEPT_QINFO                   = IT_EXCEPT_QINFO
+*   IR_SALV_FULLSCREEN_ADAPTER        = IR_SALV_FULLSCREEN_ADAPTER
+* IMPORTING
+*   E_EXIT_CAUSED_BY_CALLER           = E_EXIT_CAUSED_BY_CALLER
+*   ES_EXIT_CAUSED_BY_USER            = ES_EXIT_CAUSED_BY_USER
+  TABLES
+    t_outtab                          = it_likp
+ EXCEPTIONS
+   PROGRAM_ERROR                     = 1
+          .
+endform.                    " DISPLAY_ALV

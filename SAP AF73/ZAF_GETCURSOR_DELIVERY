@@ -1,0 +1,101 @@
+*&---------------------------------------------------------------------*
+*& Report  ZAF_INTERACTIVE_DELIVERY
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  zaf_getcursor_delivery.
+
+TYPES : BEGIN OF ty_likp,
+        vbeln TYPE vbeln_vl,
+        ernam TYPE  ernam,
+        erzet TYPE  erzet,
+        erdat TYPE  erdat,
+        END OF ty_likp.
+
+TYPES : BEGIN OF ty_lips,
+        vbeln TYPE vbeln_vl,
+        posnr TYPE posnr_vl,
+        pstyv TYPE pstyv_vl,
+        matnr TYPE matnr,
+        END OF ty_lips.
+
+DATA : it_likp TYPE STANDARD TABLE OF ty_likp,
+       wa_likp TYPE ty_likp,
+       it_lips TYPE STANDARD TABLE OF ty_lips,
+       wa_lips TYPE ty_lips,
+       it_makt TYPE STANDARD TABLE OF makt,
+       wa_makt TYPE makt.
+
+DATA : lv_vbeln TYPE likp-vbeln.
+
+SELECT-OPTIONS : s_vbeln FOR lv_vbeln.
+
+SELECT vbeln
+       ernam
+       erzet
+       erdat
+FROM likp
+INTO TABLE it_likp
+WHERE vbeln IN s_vbeln.
+
+LOOP AT it_likp INTO wa_likp.
+  WRITE :/ wa_likp-vbeln COLOR 1 HOTSPOT ON,
+           wa_likp-ernam COLOR 2,
+           wa_likp-erzet COLOR 3,
+           wa_likp-erdat COLOR 4.
+
+  HIDE : wa_likp-vbeln.
+ENDLOOP.
+
+AT LINE-SELECTION.
+
+  DATA : lv_fname TYPE char20,
+         lv_fvalue TYPE vbeln_vl.
+  GET CURSOR FIELD lv_fname
+             VALUE lv_fvalue.
+
+  CASE sy-lsind.
+
+    WHEN 1.
+      IF lv_fname = 'WA_LIKP-VBELN'.
+
+        SELECT vbeln
+               posnr
+               pstyv
+               matnr
+        FROM lips
+        INTO TABLE it_lips
+        WHERE vbeln = wa_likp-vbeln.
+
+        IF it_lips IS NOT INITIAL.
+          LOOP AT it_lips INTO wa_lips.
+            WRITE :/ wa_lips-vbeln,
+                     wa_lips-posnr,
+                     wa_lips-pstyv,
+                     wa_lips-matnr.
+
+            HIDE : wa_lips-matnr.
+          ENDLOOP.
+        ENDIF.
+      ENDIF.
+
+    WHEN 2.
+      IF lv_fname = 'WA_LIPS-MATNR'.
+        SELECT *
+        FROM makt
+        INTO TABLE it_makt
+        WHERE matnr = wa_lips-matnr.
+
+        IF it_makt IS NOT INITIAL.
+          LOOP AT it_makt INTO wa_makt.
+            WRITE :/ wa_makt-matnr,
+                     wa_makt-spras,
+                     wa_makt-maktx,
+                     wa_makt-maktg.
+          ENDLOOP.
+        ENDIF.
+      ENDIF.
+  ENDCASE.

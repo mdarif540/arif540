@@ -1,0 +1,163 @@
+*&---------------------------------------------------------------------*
+*& Report  ZAF_MARA2
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  zaf_mara2.
+************************************************************************
+****Discriptions
+************************************************************************
+
+DATA : it_mara TYPE STANDARD TABLE OF mara,
+       wa_mara TYPE mara,
+       lv_mtart TYPE mtart.
+
+************************************************************************
+****Input
+************************************************************************
+
+*parameters : p_mtart type mara-mtart.
+*parameters : p_mtart type mara-mtart obligatory default 'ROH'.
+*PARAMETERS : p_matnr TYPE matnr.
+
+DATA lv_matnr TYPE matnr.
+*SELECT-OPTIONS : s_matnr FOR lv_matnr.
+*SELECT-OPTIONS : s_matnr FOR lv_matnr obligatory.                                     "make compulsory to fill the blanks _______"
+SELECT-OPTIONS : s_matnr FOR lv_matnr obligatory default '1000' to '3000'.
+*SELECT-OPTIONS : s_matnr FOR lv_matnr no intervals.
+*SELECT-OPTIONS : s_matnr FOR lv_matnr no-extension.
+*SELECT-OPTIONS : s_matnr FOR lv_matnr no intervals no-extension.
+*SELECT-OPTIONS : s_matnr FOR lv_matnr default '1000' to '3000'  no-display.             "hide the command screen or giving value screen"
+
+
+SELECTION-SCREEN BEGIN OF BLOCK b1 WITH FRAME TITLE text-001.
+
+PARAMETERS : rb_roh RADIOBUTTON GROUP g1,                    "for radio buttons this is the parameters"
+             rb_aem RADIOBUTTON GROUP g1,
+             rb_fert RADIOBUTTON GROUP g1,
+             rb_halb RADIOBUTTON GROUP g1.
+
+SELECTION-SCREEN END OF BLOCK b1.
+
+SELECTION-SCREEN BEGIN OF BLOCK b2 WITH FRAME TITLE text-001.
+
+selection-screen begin of line.
+selection-screen position 1.
+parameters : cb_disp as checkbox.
+selection-screen comment 3(20) text-002.
+selection-screen position 30.
+parameters : cb_down as checkbox.
+selection-screen comment 32(10) text-003.
+selection-screen end of line.
+
+
+PARAMETERS : p_path TYPE string.
+
+SELECTION-SCREEN END OF BLOCK b2.
+
+*****************************************************************
+****Get Data
+*****************************************************************
+
+IF rb_roh = 'X'.
+  lv_mtart = 'ROH'.
+ELSEIF rb_aem = 'X'.
+  lv_mtart = 'AEM'.
+ELSEIF rb_fert = 'X'.
+  lv_mtart = 'FERT'.
+ELSE.
+  lv_mtart = 'HALB'.
+ENDIF.
+
+
+
+SELECT * FROM mara
+  INTO TABLE it_mara
+*  where mtart = p_mtart.
+*WHERE mtart = lv_mtart.
+*  WHERE matnr = p_matnr.
+WHERE matnr IN s_matnr
+  and mtart = lv_mtart.                          "for radio button data select option"
+
+IF cb_disp = 'X'.                                "Display the records after selecting display option"
+
+  LOOP AT it_mara INTO wa_mara.
+    WRITE : / wa_mara-matnr COLOR 7,              "material number"
+              wa_mara-ersda COLOR 4,              "material added date"
+              wa_mara-ernam COLOR 5,              "material created by name"
+              wa_mara-mtart COLOR 6.              "material name"
+  ENDLOOP.
+
+ENDIF.
+
+********************************************************************
+****Download fuctionality
+********************************************************************
+IF cb_down = 'X'.
+  CALL FUNCTION 'GUI_DOWNLOAD'
+    EXPORTING
+*      BIN_FILESIZE                    = BIN_FILESIZE
+      filename                        = p_path                  "download option"
+*      FILETYPE                        = 'ASC'
+*      APPEND                          = ' '
+     write_field_separator           = 'X'
+*      HEADER                          = '00'
+*      TRUNC_TRAILING_BLANKS           = ' '
+*      WRITE_LF                        = 'X'
+*      COL_SELECT                      = ' '
+*      COL_SELECT_MASK                 = ' '
+*      DAT_MODE                        = ' '
+*      CONFIRM_OVERWRITE               = ' '
+*      NO_AUTH_CHECK                   = ' '
+*      CODEPAGE                        = ' '
+*      IGNORE_CERR                     = ABAP_TRUE
+*      REPLACEMENT                     = '#'
+*      WRITE_BOM                       = ' '
+*      TRUNC_TRAILING_BLANKS_EOL       = 'X'
+*      WK1_N_FORMAT                    = ' '
+*      WK1_N_SIZE                      = ' '
+*      WK1_T_FORMAT                    = ' '
+*      WK1_T_SIZE                      = ' '
+*      WRITE_LF_AFTER_LAST_LINE        = ABAP_TRUE
+*      SHOW_TRANSFER_STATUS            = ABAP_TRUE
+*    IMPORTING
+*      FILELENGTH                      = FILELENGTH
+    TABLES
+      data_tab                        = it_mara                  "internal table"
+*      FIELDNAMES                      = FIELDNAMES
+*    EXCEPTIONS
+*      FILE_WRITE_ERROR                = 1
+*      NO_BATCH                        = 2
+*      GUI_REFUSE_FILETRANSFER         = 3
+*      INVALID_TYPE                    = 4
+*      NO_AUTHORITY                    = 5
+*      UNKNOWN_ERROR                   = 6
+*      HEADER_NOT_ALLOWED              = 7
+*      SEPARATOR_NOT_ALLOWED           = 8
+*      FILESIZE_NOT_ALLOWED            = 9
+*      HEADER_TOO_LONG                 = 10
+*      DP_ERROR_CREATE                 = 11
+*      DP_ERROR_SEND                   = 12
+*      DP_ERROR_WRITE                  = 13
+*      UNKNOWN_DP_ERROR                = 14
+*      ACCESS_DENIED                   = 15
+*      DP_OUT_OF_MEMORY                = 16
+*      DISK_FULL                       = 17
+*      DP_TIMEOUT                      = 18
+*      FILE_NOT_FOUND                  = 19
+*      DATAPROVIDER_EXCEPTION          = 20
+*      CONTROL_FLUSH_ERROR             = 21
+            .
+
+ENDIF.
+
+**********************************************************************
+* To get the default path or file name
+**********************************************************************
+
+Initialization.
+
+concatenate 'c:\sap73\AFs\' sy-datum sy-uzeit '.XLS' into p_path.

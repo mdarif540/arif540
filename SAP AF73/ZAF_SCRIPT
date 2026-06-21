@@ -1,0 +1,76 @@
+*&---------------------------------------------------------------------*
+*& Report  ZAF_SCRIPT
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  ZAF_SCRIPT.
+
+CALL FUNCTION 'OPEN_FORM'
+ EXPORTING
+*   APPLICATION                       = 'TX'
+*   ARCHIVE_INDEX                     = ARCHIVE_INDEX
+*   ARCHIVE_PARAMS                    = ARCHIVE_PARAMS
+*   DEVICE                            = 'PRINTER'
+*   DIALOG                            = 'X'
+   FORM                              = 'ZAF_SCRIPTS '
+*   LANGUAGE                          = SY-LANGU
+*   OPTIONS                           = OPTIONS
+*   MAIL_SENDER                       = MAIL_SENDER
+*   MAIL_RECIPIENT                    = MAIL_RECIPIENT
+*   MAIL_APPL_OBJECT                  = MAIL_APPL_OBJECT
+*   RAW_DATA_INTERFACE                = '*'
+*   SPONUMIV                          = SPONUMIV
+* IMPORTING
+*   LANGUAGE                          = LANGUAGE
+*   NEW_ARCHIVE_PARAMS                = NEW_ARCHIVE_PARAMS
+*   RESULT                            = RESULT
+ EXCEPTIONS
+   CANCELED                          = 1
+   DEVICE                            = 2
+   FORM                              = 3
+   OPTIONS                           = 4
+   UNCLOSED                          = 5
+   MAIL_OPTIONS                      = 6
+   ARCHIVE_ERROR                     = 7
+   INVALID_FAX_NUMBER                = 8
+   MORE_PARAMS_NEEDED_IN_BATCH       = 9
+   SPOOL_ERROR                       = 10
+   CODEPAGE                          = 11
+          .
+
+CALL FUNCTION 'WRITE_FORM'
+* EXPORTING
+*   ELEMENT                        = ' '
+*   FUNCTION                       = 'SET'
+*   TYPE                           = 'BODY'
+*   WINDOW                         = 'MAIN'
+* IMPORTING
+*   PENDING_LINES                  = PENDING_LINES
+ EXCEPTIONS
+   ELEMENT                        = 1
+   FUNCTION                       = 2
+   TYPE                           = 3
+   UNOPENED                       = 4
+   UNSTARTED                      = 5
+   WINDOW                         = 6
+   BAD_PAGEFORMAT_FOR_PRINT       = 7
+   SPOOL_ERROR                    = 8
+   CODEPAGE                       = 9
+          .
+
+CALL FUNCTION 'CLOSE_FORM'
+* IMPORTING
+*   RESULT                         = RESULT
+*   RDI_RESULT                     = RDI_RESULT
+* TABLES
+*   OTFDATA                        = OTFDATA
+ EXCEPTIONS
+   UNOPENED                       = 1
+   BAD_PAGEFORMAT_FOR_PRINT       = 2
+   SEND_ERROR                     = 3
+   SPOOL_ERROR                    = 4
+   CODEPAGE                       = 5
+          .

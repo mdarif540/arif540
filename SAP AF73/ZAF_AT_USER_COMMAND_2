@@ -1,0 +1,130 @@
+*&---------------------------------------------------------------------*
+*& Report  ZAF_AT_USER_COMMAND_2
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  zaf_at_user_command_2.
+
+TYPES : BEGIN OF ty_likp,
+        vbeln TYPE vbeln_vl,
+        ernam TYPE ernam,
+        erzet TYPE erzet,
+        erdat TYPE erdat,
+        END OF ty_likp.
+
+TYPES : BEGIN OF ty_lips,
+        vbeln TYPE  vbeln_vl,
+        posnr TYPE  posnr_vl,
+        pstyv TYPE  pstyv_vl,
+        ernam TYPE  ernam,
+        END OF ty_lips.
+
+DATA : it_likp TYPE STANDARD TABLE OF ty_likp,
+       wa_likp TYPE ty_likp,
+       it_lips TYPE STANDARD TABLE OF ty_lips,
+       wa_lips TYPE ty_lips,
+       lv_box TYPE c,
+       it_selected TYPE STANDARD TABLE OF ty_lips.
+
+DATA : lv_vbeln TYPE likp-vbeln.
+SELECT-OPTIONS : s_vbeln FOR lv_vbeln.
+
+SET PF-STATUS 'ZSTATUS'.
+SELECT vbeln
+       ernam
+       erzet
+       erdat
+FROM likp
+INTO TABLE it_likp
+WHERE vbeln IN s_vbeln.
+
+
+LOOP AT it_likp INTO wa_likp.
+  WRITE : / lv_box AS CHECKBOX,
+            wa_likp-vbeln COLOR 1,
+            wa_likp-ernam COLOR 2,
+            wa_likp-erzet COLOR 3,
+            wa_likp-erdat COLOR 4.
+ENDLOOP.
+
+AT USER-COMMAND.
+
+  CASE sy-ucomm.
+    WHEN 'SALL'.
+      lv_box = 'X'.
+
+      LOOP AT it_likp INTO wa_likp.
+        WRITE : / lv_box AS CHECKBOX,
+                  wa_likp-vbeln COLOR 1,
+                  wa_likp-ernam COLOR 2,
+                  wa_likp-erzet COLOR 3,
+                  wa_likp-erdat COLOR 4.
+      ENDLOOP.
+
+    WHEN 'DALL'.
+      lv_box = ' '.
+
+      LOOP AT it_likp INTO wa_likp.
+        WRITE : / lv_box AS CHECKBOX,
+                   wa_likp-vbeln,
+                   wa_likp-ernam,
+                   wa_likp-erzet,
+                   wa_likp-erdat.
+      ENDLOOP.
+
+    WHEN 'ITEMS'.
+
+      REFRESH it_selected.
+
+      DATA : lv_count TYPE i.
+      DESCRIBE LIST NUMBER OF LINES lv_count.
+
+      DO lv_count TIMES.
+        READ LINE sy-index
+                  FIELD VALUE lv_box
+                  wa_likp-vbeln
+                  wa_likp-ernam
+                  wa_likp-erzet
+                  wa_likp-erdat.
+
+        IF sy-subrc EQ 0.
+          IF lv_box = 'X'.
+
+            CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+              EXPORTING
+                input  = wa_likp-vbeln
+              IMPORTING
+                output = wa_likp-vbeln.
+
+            APPEND wa_likp TO it_selected.
+            CLEAR : wa_likp.
+          ENDIF.
+        ENDIF.
+
+      ENDDO.
+
+      IF it_selected IS NOT INITIAL.
+
+        SELECT vbeln
+              posnr
+              pstyv
+              ernam
+        FROM lips
+        INTO TABLE it_lips
+        FOR ALL ENTRIES IN it_selected
+        WHERE vbeln = it_selected-vbeln.
+
+        IF it_lips IS NOT INITIAL.
+          LOOP AT it_lips INTO wa_lips.
+            WRITE : / wa_lips-vbeln,
+                      wa_lips-posnr,
+                      wa_lips-pstyv,
+                      wa_lips-ernam.
+          ENDLOOP.
+        ENDIF.
+
+      ENDIF.
+  ENDCASE.
